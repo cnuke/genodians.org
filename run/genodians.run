@@ -6,11 +6,12 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/pkg/[drivers_nic_pkg] \
                   [depot_user]/pkg/genodians \
                   [depot_user]/pkg/system_rtc-[board] \
-                  [depot_user]/src/vfs_jitterentropy
+                  [depot_user]/src/vfs_jitterentropy \
+                  [depot_user]/src/report_rom
 
 install_config {
 
-<config prio_levels="2">
+<config prio_levels="2" verbose="yes">
 
 	<parent-provides>
 		<service name="ROM"/>
@@ -73,13 +74,19 @@ install_config {
 		</route>
 	</start>
 
+	<start name="date_log">
+		<resource name="RAM" quantum="2M"/>
+		<provides> <service name="LOG"/> </provides>
+		<config/>
+	</start>
+
 	<start name="genodians" caps="5000" priority="-1">
 		<resource name="RAM" quantum="768M"/>
 		<binary name="init"/>
 		<provides> <service name="Uplink"/> </provides>
 		<route>
 			<service name="ROM" label="config"> <parent label="genodians.config"/> </service>
-			<service name="LOG">   <parent/> </service>
+			<service name="LOG">   <child name="date_log"/> </service>
 			<service name="PD">    <parent/> </service>
 			<service name="RM">    <parent/> </service>
 			<service name="CPU">   <parent/> </service>
@@ -103,6 +110,7 @@ if {![file exists bin/genodians.pem]} {
 	exit 0
 }
 
+build { server/date_log }
 build_boot_image [list {*}[build_artifacts] chain.pem dhparams.pem genodians.pem ]
 
 append qemu_args " -m 1000 "
