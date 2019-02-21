@@ -84,6 +84,12 @@ install_config {
 		</route>
 	</start>
 
+	<start name="date_log">
+		<resource name="RAM" quantum="2M"/>
+		<provides> <service name="LOG"/> </provides>
+		<config/>
+	</start>
+
 	<start name="genodians" caps="6000" priority="-1">
 		<resource name="RAM" quantum="768M"/>
 		<binary name="init"/>
@@ -91,7 +97,7 @@ install_config {
 		<route>
 			<service name="ROM" label="config"> <parent label="genodians.config"/> </service>
 			<service name="LOG" label="fetch_lighttpd"> <child name="black_hole"/> </service>
-			<service name="LOG">   <parent/> </service>
+			<service name="LOG">   <child name="date_log"/> </service>
 			<service name="PD">    <parent/> </service>
 			<service name="RM">    <parent/> </service>
 			<service name="CPU">   <parent/> </service>
@@ -126,7 +132,7 @@ if {[catch {set size [file size bin/upload-user.conf]}] || $size < 69} {
 	close $fh
 }
 
-build { app/genodians_manager }
+build { server/date_log app/genodians_manager }
 build_boot_image [list {*}[build_artifacts] fullchain.pem privkey.pem upload-user.conf ]
 
 append qemu_args " -m 1000 "
