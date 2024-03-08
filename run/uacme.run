@@ -1,0 +1,102 @@
+create_boot_directory
+
+proc depot_user {} { return [get_cmd_arg --depot-user genodelabs] }
+
+import_from_depot [depot_user]/src/[base_src] \
+                  [depot_user]/pkg/[drivers_nic_pkg] \
+                  [depot_user]/pkg/uacme \
+                  [depot_user]/pkg/system_rtc-[board] \
+                  [depot_user]/src/vfs_jitterentropy
+
+install_config {
+
+<config prio_levels="2">
+
+	<parent-provides>
+		<service name="ROM"/>
+		<service name="IRQ"/>
+		<service name="IO_MEM"/>
+		<service name="IO_PORT"/>
+		<service name="PD"/>
+		<service name="RM"/>
+		<service name="CPU"/>
+		<service name="LOG"/>
+	</parent-provides>
+
+	<default-route>
+		<any-service> <parent/> <any-child/> </any-service>
+	</default-route>
+
+	<default caps="100"/>
+
+	<start name="timer">
+		<resource name="RAM" quantum="1M"/>
+		<provides> <service name="Timer"/> </provides>
+		<config/>
+	</start>
+
+	<start name="system_rtc" caps="1000">
+		<resource name="RAM" quantum="6M"/>
+		<binary name="init"/>
+		<provides> <service name="Rtc"/> </provides>
+		<route>
+			<service name="ROM" label="config"> <parent label="system_rtc.config"/> </service>
+			<service name="IO_MEM">  <parent/> </service>
+			<service name="IO_PORT"> <parent/> </service>
+			<service name="IRQ">     <parent/> </service>
+			<service name="LOG">     <parent/> </service>
+			<service name="PD">      <parent/> </service>
+			<service name="RM">      <parent/> </service>
+			<service name="CPU">     <parent/> </service>
+			<service name="ROM">     <parent/> </service>
+			<service name="Timer">   <child name="timer"/> </service>
+		</route>
+	</start>
+
+
+	<start name="drivers" caps="1000" managing_system="yes">
+		<resource name="RAM" quantum="32M"/>
+		<binary name="init"/>
+		<provides> <service name="Nic"/> </provides>
+		<route>
+			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
+			<service name="IO_MEM">  <parent/> </service>
+			<service name="IO_PORT"> <parent/> </service>
+			<service name="IRQ">     <parent/> </service>
+			<service name="LOG">     <parent/> </service>
+			<service name="PD">      <parent/> </service>
+			<service name="RM">      <parent/> </service>
+			<service name="CPU">     <parent/> </service>
+			<service name="ROM">     <parent/> </service>
+			<service name="Timer">   <child name="timer"/> </service>
+			<service name="Uplink">  <child name="uacme"/> </service>
+		</route>
+	</start>
+
+	<start name="uacme" caps="5000" priority="-1">
+		<resource name="RAM" quantum="512M"/>
+		<binary name="init"/>
+		<provides> <service name="Uplink"/> </provides>
+		<route>
+			<service name="ROM" label="config"> <parent label="uacme.config"/> </service>
+			<service name="LOG">   <parent/> </service>
+			<service name="PD">    <parent/> </service>
+			<service name="RM">    <parent/> </service>
+			<service name="CPU">   <parent/> </service>
+			<service name="ROM">   <parent/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<service name="Nic">   <child name="drivers"/> </service>
+			<service name="Rtc">   <child name="system_rtc"/> </service>
+		</route>
+	</start>
+
+</config>}
+
+
+build_boot_image { }
+
+append qemu_args " -m 1000 "
+append qemu_args " -netdev user,id=net0,hostfwd=tcp::5555-:80,hostfwd=tcp::5556-:443 "
+append qemu_args " -nographic -serial mon:stdio "
+
+run_genode_until forever
