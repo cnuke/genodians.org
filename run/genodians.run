@@ -6,7 +6,10 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/pkg/[drivers_nic_pkg] \
                   [depot_user]/pkg/genodians \
                   [depot_user]/pkg/system_rtc-[board] \
+                  [depot_user]/src/vfs_import \
                   [depot_user]/src/vfs_jitterentropy \
+                  [depot_user]/src/fs_report \
+                  [depot_user]/src/fs_rom \
                   [depot_user]/src/report_rom
 
 install_config {
@@ -80,7 +83,7 @@ install_config {
 		<config/>
 	</start>
 
-	<start name="genodians" caps="5000" priority="-1">
+	<start name="genodians" caps="6000" priority="-1">
 		<resource name="RAM" quantum="768M"/>
 		<binary name="init"/>
 		<provides> <service name="Uplink"/> </provides>
@@ -110,7 +113,7 @@ if {![file exists bin/genodians.pem]} {
 	exit 0
 }
 
-build { server/date_log }
+build { server/date_log app/genodians_manager }
 build_boot_image [list {*}[build_artifacts] chain.pem dhparams.pem genodians.pem ]
 
 append qemu_args " -m 1000 "
