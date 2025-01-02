@@ -103,7 +103,7 @@ if {![file exists bin/genodians.pem]} {
 	exit 0
 }
 
-build_boot_image { chain.pem dhparams.pem genodians.pem }
+build_boot_image [list {*}[build_artifacts] chain.pem dhparams.pem genodians.pem ]
 
 append qemu_args " -m 1000 "
 append qemu_args " -netdev user,id=net0,hostfwd=tcp::5555-:80,hostfwd=tcp::5556-:443 "
