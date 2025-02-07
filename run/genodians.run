@@ -124,7 +124,7 @@ if {[catch {set size [file size bin/upload-user.conf]}] || $size < 69} {
 	close $fh
 }
 
-build { server/date_log app/genodians_manager }
+build { server/date_log app/genodians_manager server/fs_rom server/vfs lib/vfs app/lighttpd }
 build_boot_image [list {*}[build_artifacts] fullchain.pem privkey.pem upload-user.conf ]
 
 append qemu_args " -m 1000 "

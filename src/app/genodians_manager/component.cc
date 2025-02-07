@@ -1211,10 +1211,20 @@ struct Genodians::Main
 	Signal_handler<Main> _fullchain_rom_sigh {
 		_env.ep(), *this, &Main::_handle_fullchain_update };
 
+	bool _sigh_signal = false;
+
 	void _handle_fullchain_update()
 	{
+		if (_sigh_signal) {
+			_sigh_signal = false;
+			return;
+		}
+
 		log("Certificate update, restarting lighttpd");
 		_lighttpd.trigger_restart();
+
+		_fullchain_rom.sigh(_fullchain_rom_sigh);
+		_sigh_signal = true;
 	}
 
 	Expanding_reporter _status_reporter {
