@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -x
+
 #
 # The following environment variables must be set prior to invoking
 # this script:
@@ -40,7 +42,7 @@ if [ "$1" = "uacme-issue" ]; then
 	check_webdav_credentials "uacme-issue"
 
 	uacme ${FORCE} ${STAGING} ${VERBOSE} ${CONFDIR} ${CRYPTO} \
-	      --hook $0 issue ${UACME_DOMAIN} www.${UACME_DOMAIN}
+	      --hook $0 issue ${UACME_DOMAIN}
 	exit $?
 fi
 
