@@ -653,6 +653,7 @@ struct Genodians::Import : Genodians::Managed_init
 	void _handle_step_timeout(Duration)
 	{
 		_step_timeout_triggered = true;
+		warning("timeout triggered for step ", (unsigned)_state);
 
 		with_cached_state_report([&] (Xml_node const &node) {
 			state_update(node, false); }, [&] { });
