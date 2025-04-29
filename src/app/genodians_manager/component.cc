@@ -1258,6 +1258,17 @@ struct Genodians::Main
 	void _handle_status_timeout(Duration) {
 		_handle_status(); }
 
+	Timer::One_shot_timeout<Main> _dbg_timeout {
+		_timer, *this, &Main::_handle_dbg_timeout };
+
+	void _handle_dbg_timeout(Duration)
+	{
+		log("Debug timeout triggered");
+		Microseconds const next_update = Microseconds {
+			60'000'000ull * 1ull };
+		_dbg_timeout.schedule(next_update);
+	}
+
 	struct State_rom_handler
 	{
 		Attached_rom_dataspace            _rom;
@@ -1392,6 +1403,8 @@ struct Genodians::Main
 		_nic_router_state_rom { _env, "nic_router.state" }
 	{
 		_fullchain_rom.sigh(_fullchain_rom_sigh);
+
+		_handle_dbg_timeout(Duration{Microseconds{0}});
 
 		/* trigger initial status report */
 		_handle_status();
