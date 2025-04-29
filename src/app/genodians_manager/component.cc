@@ -638,7 +638,7 @@ struct Genodians::Import : Genodians::Managed_init
 	Seconds _calculate_timeout(Seconds const &secs) const
 	{
 		/* some steps take normally at most a few seconds */
-		Seconds const min_duration = { min(secs.value / 2, 15u) };
+		Seconds const min_duration = { max(secs.value / 2, 15u) };
 
 		return { secs.value + min_duration.value };
 	}
