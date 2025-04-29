@@ -635,10 +635,11 @@ struct Genodians::Import : Genodians::Managed_init
 	 * Step timeout handling
 	 */
 
-	Seconds _calculate_timeout(Seconds const &secs) const
+	Seconds _calculate_timeout(Seconds const secs,
+	                           Seconds const min = { .value = 15u }) const
 	{
 		/* some steps take normally at most a few seconds */
-		Seconds const min_duration = { max(secs.value / 2, 15u) };
+		Seconds const min_duration = { max(secs.value / 2, min.value) };
 
 		return { secs.value + min_duration.value };
 	}
@@ -894,7 +895,12 @@ void Genodians::Import::state_update(Xml_node const &state_node,
 	{
 		if (timeout) _fetch->trigger_restart();
 		else         _fetch.construct(Managed_init::child_states, _config.fetchurl);
-		_step_timeout_secs = _calculate_timeout(_last_fetch_duration);
+		_step_timeout_secs = _calculate_timeout(_last_fetch_duration,
+		                                        /*
+		                                         * Failed downloads take up to 10s, so make
+		                                         * room for the odd ones out to fail.
+		                                         */
+		                                        Seconds{.value = 60u});
 		break;
 	}
 	case State::WIPE:
