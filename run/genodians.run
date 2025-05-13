@@ -10,6 +10,8 @@ import_from_depot [depot_user]/src/[base_src] \
                   [depot_user]/src/vfs_jitterentropy \
                   [depot_user]/src/fs_report \
                   [depot_user]/src/fs_query \
+                  [depot_user]/src/trace_logger \
+                  [depot_user]/src/ping \
                   [depot_user]/src/report_rom
 
 install_config {
@@ -25,6 +27,7 @@ install_config {
 		<service name="RM"/>
 		<service name="CPU"/>
 		<service name="LOG"/>
+		<service name="TRACE"/>
 	</parent-provides>
 
 	<default-route>
@@ -32,6 +35,21 @@ install_config {
 	</default-route>
 
 	<default caps="100"/>
+
+<!--
+	<start name="trace_logger" ram="16M">
+		<config verbose="yes" priority="no"
+		        sc_time="no" session_ram="4M" session_arg_buffer="64K" period_sec="30"
+		        default_policy="null" default_buffer="1K">
+
+			<policy label="init -> genodians -> genodians_manager"/>
+		</config>
+		<route>
+			<service name="TRACE"> <parent label=""/> </service>
+			<any-service> <parent/> <any-child/> </any-service>
+		</route>
+	</start>
+-->
 
 	<start name="timer">
 		<resource name="RAM" quantum="1M"/>
@@ -58,10 +76,9 @@ install_config {
 	</start>
 
 
-	<start name="drivers" caps="1000" managing_system="yes">
+	<start name="drivers" caps="1100" managing_system="yes">
 		<resource name="RAM" quantum="32M"/>
 		<binary name="init"/>
-		<provides> <service name="Nic"/> </provides>
 		<route>
 			<service name="ROM" label="config"> <parent label="drivers.config"/> </service>
 			<service name="IO_MEM">  <parent/> </service>
@@ -83,10 +100,24 @@ install_config {
 		<config/>
 	</start>
 
+	<start name="ping">
+		<resource name="RAM" quantum="5M"/>
+		<config dst_ip="8.8.8.8" period_sec="30" verbose="no" count="100000000"/>
+		<route>
+			<service name="LOG">   <child name="date_log"/> </service>
+			<service name="Timer"> <child name="timer"/> </service>
+			<service name="Nic">   <child name="genodians"/> </service>
+			<any-service> <parent/> </any-service>
+		</route>
+	</start>
+
 	<start name="genodians" caps="6000" priority="-1">
 		<resource name="RAM" quantum="768M"/>
 		<binary name="init"/>
-		<provides> <service name="Uplink"/> </provides>
+		<provides>
+			<service name="Nic"/>
+			<service name="Uplink"/>
+		</provides>
 		<route>
 			<service name="ROM" label="config"> <parent label="genodians.config"/> </service>
 			<service name="LOG">   <child name="date_log"/> </service>
@@ -124,8 +155,8 @@ if {[catch {set size [file size bin/upload-user.conf]}] || $size < 69} {
 	close $fh
 }
 
-build { server/date_log app/genodians_manager }
-build_boot_image [list {*}[build_artifacts] fullchain.pem privkey.pem upload-user.conf ]
+build { server/date_log app/genodians_manager trace/policy/null }
+build_boot_image [list {*}[build_artifacts] fullchain.pem privkey.pem upload-user.conf null ]
 
 append qemu_args " -m 1000 "
 append qemu_args " -netdev user,id=net0,hostfwd=tcp::5555-:80,hostfwd=tcp::5556-:443 "
