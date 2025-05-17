@@ -1397,6 +1397,12 @@ struct Genodians::Main
 		static constexpr unsigned MAX_CHECKS = 3;
 		static unsigned check_count = 0;
 
+		/* inhibit check when we have not yet imported anything */
+		if (!_import._imports) {
+			log("Inhibit lighttpd check");
+			return;
+		}
+
 		auto check_progress = [&] (Xml_node const &fetch_node) {
 			if (!fetch_node.attribute_value("finished", false))
 				return;
@@ -1412,6 +1418,9 @@ struct Genodians::Main
 				++check_count;
 			else if (result == "success")
 				check_count = 0;
+
+			if (check_count)
+				log("Lighttpd check already failed ", check_count, " times");
 
 			if (check_count >= MAX_CHECKS) {
 				/* XXX consider certificate update */
