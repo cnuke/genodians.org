@@ -1329,6 +1329,14 @@ struct Genodians::Main
 
 	void _generate_report(Xml_generator &xml)
 	{
+		// _nic_router_state_rom.with_xml([&] (Xml_node const &node) {
+
+		// 	xml.append("<!--");
+		// 	node.with_raw_content([&] (char const *s, size_t len) {
+		// 		xml.append(s, len); });
+		// 	xml.append("-->");
+		// });
+
 		Html::gen_section_div(xml, "Overview", [&] (Xml_generator &xml) {
 			Html::gen_table_body(xml, [&] (Xml_generator &xml) {
 				Html::gen_table_key_value_row(xml,
@@ -1404,6 +1412,7 @@ struct Genodians::Main
 		}
 
 		auto check_progress = [&] (Xml_node const &fetch_node) {
+			/* ignore transient reports */
 			if (!fetch_node.attribute_value("finished", false))
 				return;
 
@@ -1419,8 +1428,16 @@ struct Genodians::Main
 			else if (result == "success")
 				check_count = 0;
 
-			if (check_count)
+			if (check_count) {
 				log("Lighttpd check already failed ", check_count, " times");
+
+				_nic_router_state_rom.with_xml([&] (Xml_node const &node) {
+					log(node);
+				});
+			}
+
+			if (!check_count)
+				log("Lighttpd check successful");
 
 			if (check_count >= MAX_CHECKS) {
 				/* XXX consider certificate update */
@@ -1448,7 +1465,7 @@ struct Genodians::Main
 	{
 		_fullchain_rom.sigh(_fullchain_rom_sigh);
 
-		_handle_dbg_timeout(Duration{Microseconds{0}});
+		// _handle_dbg_timeout(Duration{Microseconds{0}});
 
 		/* trigger initial status report */
 		_handle_status();

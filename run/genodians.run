@@ -107,6 +107,7 @@ install_config {
 		<config/>
 	</start>
 
+<!--
 	<start name="ping">
 		<resource name="RAM" quantum="5M"/>
 		<config dst_ip="8.8.8.8" period_sec="30" verbose="no" count="100000000"/>
@@ -117,6 +118,7 @@ install_config {
 			<any-service> <parent/> </any-service>
 		</route>
 	</start>
+-->
 
 	<start name="genodians" caps="6000" priority="-1">
 		<resource name="RAM" quantum="768M"/>
